@@ -6,10 +6,16 @@ import { LuFileText } from "react-icons/lu";
 import { IoChevronDown } from "react-icons/io5";
 import { LuSearch } from "react-icons/lu";
 import { FiRefreshCw } from "react-icons/fi";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, get, child } from 'firebase/database';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import ComparisonResults from '../ComparisonResults/ComparisonResults';
 import './DrugComparison.css';
+
+// Your Firebase config should be imported or defined here
+// import { firebaseConfig } from '../firebase/config';
 
 const DrugComparison = () => {
   const navigate = useNavigate();
@@ -23,109 +29,228 @@ const DrugComparison = () => {
   const [genericDrugName, setGenericDrugName] = useState('');
   const [nceDrugName, setNceDrugName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   
-  // List of available drugs and their strengths
-  const drugOptions = [
-    { value: 'Paracetamol', label: 'Paracetamol' },
-    { value: 'Ibuprofen', label: 'Ibuprofen' },
-    { value: 'Amoxicillin', label: 'Amoxicillin' },
-    { value: 'Omeprazole', label: 'Omeprazole' },
-    { value: 'Atorvastatin', label: 'Atorvastatin' },
-    { value: 'Metformin', label: 'Metformin' },
-    { value: 'Amlodipine', label: 'Amlodipine' },
-    { value: 'Diazepam', label: 'Diazepam' },
-    { value: 'Aspirin', label: 'Aspirin' },
-    { value: 'Lisinopril', label: 'Lisinopril' }
-  ];
+  // Firebase data states
+  const [drugsData, setDrugsData] = useState([]);
+  const [drugOptions, setDrugOptions] = useState([]);
+  const [dosageFormOptions, setDosageFormOptions] = useState([]);
+  const [availableStrengths, setAvailableStrengths] = useState([]);
 
-  const dosageFormOptions = [
-    { value: 'Tablet', label: 'Tablet' },
-    { value: 'Capsule', label: 'Capsule' },
-    { value: 'Oral Solution', label: 'Oral Solution' },
-    { value: 'Syrup', label: 'Syrup' },
-    { value: 'Suspension', label: 'Suspension' },
-    { value: 'Injection', label: 'Injection' },
-    { value: 'Cream', label: 'Cream' },
-    { value: 'Ointment', label: 'Ointment' },
-    { value: 'Gel', label: 'Gel' }
-  ];
+  // Initialize Firebase - replace with your config
+  // Uncomment and update this section with your actual config
+  // const app = initializeApp(firebaseConfig);
+  // const database = getDatabase(app);
+  // const auth = getAuth(app);
 
-  // Strength options based on selected drug
-  const getStrengthOptions = (drug) => {
-    switch(drug) {
-      case 'Paracetamol':
-        return [
-          { value: '500 mg', label: '500 mg' },
-          { value: '250 mg', label: '250 mg' },
-          { value: '125 mg', label: '125 mg' }
-        ];
-      case 'Ibuprofen':
-        return [
-          { value: '400 mg', label: '400 mg' },
-          { value: '200 mg', label: '200 mg' },
-          { value: '100 mg', label: '100 mg' }
-        ];
-      case 'Amoxicillin':
-        return [
-          { value: '500 mg', label: '500 mg' },
-          { value: '250 mg', label: '250 mg' },
-          { value: '125 mg', label: '125 mg' }
-        ];
-      case 'Omeprazole':
-        return [
-          { value: '40 mg', label: '40 mg' },
-          { value: '20 mg', label: '20 mg' },
-          { value: '10 mg', label: '10 mg' }
-        ];
-      case 'Atorvastatin':
-        return [
-          { value: '80 mg', label: '80 mg' },
-          { value: '40 mg', label: '40 mg' },
-          { value: '20 mg', label: '20 mg' },
-          { value: '10 mg', label: '10 mg' }
-        ];
-      default:
-        return [
-          { value: '100 mg', label: '100 mg' },
-          { value: '50 mg', label: '50 mg' },
-          { value: '25 mg', label: '25 mg' },
-          { value: '10 mg', label: '10 mg' },
-          { value: '5 mg', label: '5 mg' }
-        ];
-    }
-  };
+  // Or use existing Firebase instance if it's already initialized elsewhere
+  const database = getDatabase();
+  const auth = getAuth();
 
   // NCE name mapping
-  const getNceName = (scientificName) => {
-    const nceNames = {
-      'Paracetamol': 'Panadol Extra Strength',
-      'Ibuprofen': 'Advil',
-      'Amoxicillin': 'Amoxil',
-      'Omeprazole': 'Prilosec',
-      'Atorvastatin': 'Lipitor',
-      'Metformin': 'Glucophage',
-      'Amlodipine': 'Norvasc',
-      'Diazepam': 'Valium',
-      'Aspirin': 'Bayer Aspirin',
-      'Lisinopril': 'Zestril'
-    };
-    
-    return nceNames[scientificName] || 'Reference Drug';
+  const nceNames = {
+    'Paracetamol': 'Panadol Extra Strength',
+    'Ibuprofen': 'Advil',
+    'Amoxicillin': 'Amoxil',
+    'Omeprazole': 'Prilosec',
+    'Atorvastatin': 'Lipitor',
+    'Metformin': 'Glucophage',
+    'Amlodipine': 'Norvasc',
+    'Diazepam': 'Valium',
+    'Aspirin': 'Bayer Aspirin',
+    'Lisinopril': 'Zestril'
   };
 
+  // Check authentication status and fetch data
   useEffect(() => {
-    // Check if user is logged in
-    const userEmail = sessionStorage.getItem('userEmail');
-    if (!userEmail) {
-      navigate('/');
-      toast.error('Please log in to access this page');
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        console.log("User authenticated:", user.email);
+      } else {
+        setIsAuthenticated(false);
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (!userEmail) {
+          navigate('/');
+          toast.error('Please log in to access this page');
+        }
+      }
+    });
+
+    // Fetch drugs data regardless of auth state (rules should handle permissions)
+    fetchDrugsData();
 
     // Check if URL contains "demo" parameter
     if (window.location.href.includes('demo')) {
       setShowResults(true);
     }
-  }, [navigate]);
+
+    return () => unsubscribe();
+  }, [navigate, auth]);
+  
+  // Debug function to log Firebase data structure
+  const debugFirebaseData = async () => {
+    try {
+      const dbRef = ref(database);
+      // Get the root data to examine structure
+      const snapshot = await get(dbRef);
+      
+      if (snapshot.exists()) {
+        console.log("Firebase Database Structure:", snapshot.val());
+      } else {
+        console.log("No data available in Firebase");
+      }
+    } catch (error) {
+      console.error("Error checking database structure:", error);
+    }
+  };
+
+  // Fallback data for when Firebase access fails or for demo mode
+  const loadFallbackData = () => {
+    console.log("Loading fallback data");
+    const fallbackDrugs = [
+      { scientificName: 'Paracetamol', dosageForm: 'Tablet', strength: '500 mg' },
+      { scientificName: 'Paracetamol', dosageForm: 'Tablet', strength: '250 mg' },
+      { scientificName: 'Paracetamol', dosageForm: 'Syrup', strength: '125 mg/5ml' },
+      { scientificName: 'Ibuprofen', dosageForm: 'Capsule', strength: '200 mg' },
+      { scientificName: 'Ibuprofen', dosageForm: 'Tablet', strength: '400 mg' },
+      { scientificName: 'Amoxicillin', dosageForm: 'Capsule', strength: '500 mg' },
+      { scientificName: 'Amoxicillin', dosageForm: 'Suspension', strength: '250 mg/5ml' },
+      { scientificName: 'Omeprazole', dosageForm: 'Capsule', strength: '20 mg' },
+      { scientificName: 'Atorvastatin', dosageForm: 'Tablet', strength: '10 mg' },
+      { scientificName: 'Atorvastatin', dosageForm: 'Tablet', strength: '20 mg' }
+    ];
+
+    setDrugsData(fallbackDrugs);
+    
+    // Extract unique scientific names for dropdown
+    const uniqueNames = [...new Set(fallbackDrugs.map(drug => drug.scientificName))];
+    setDrugOptions(uniqueNames.map(name => ({ value: name, label: name })));
+    
+    // Extract unique dosage forms for dropdown
+    const uniqueDosageForms = [...new Set(fallbackDrugs.map(drug => drug.dosageForm))];
+    setDosageFormOptions(uniqueDosageForms.map(form => ({ value: form, label: form })));
+    
+    setIsDataLoading(false);
+  };
+
+  const fetchDrugsData = async () => {
+    setIsDataLoading(true);
+    
+    // Debug the database structure
+    debugFirebaseData();
+    
+    try {
+      console.log("Attempting to fetch drugs data...");
+      const dbRef = ref(database);
+      
+      // First try with direct path
+      let snapshot = await get(child(dbRef, 'drugs'));
+      
+      // If no data found, try without 'drugs' path (in case it's at root level)
+      if (!snapshot.exists()) {
+        console.log("No data at 'drugs' path. Checking root level...");
+        snapshot = await get(dbRef);
+      }
+      
+      if (snapshot.exists()) {
+        console.log("Raw data fetched:", snapshot.val());
+        
+        let data;
+        // If we got data at the 'drugs' path
+        if (snapshot.hasChild('drugs')) {
+          data = snapshot.child('drugs').val();
+          console.log("Data found in 'drugs' path:", data);
+        } else {
+          // If data is at root level or has different structure
+          data = snapshot.val();
+          // Check if data itself is the drugs object, or contains a drugs property
+          if (data.drugs) {
+            data = data.drugs;
+            console.log("Data found in root.drugs:", data);
+          } else {
+            console.log("Using root data directly:", data);
+          }
+        }
+        
+        // Convert Firebase object to array, handling different data structures
+        let drugsArray = [];
+        
+        if (Array.isArray(data)) {
+          // If it's already an array
+          drugsArray = data;
+        } else if (typeof data === 'object') {
+          // If it's an object with numeric keys (common Firebase structure)
+          drugsArray = Object.values(data);
+        }
+        
+        console.log("Processed drugs array:", drugsArray);
+        
+        if (drugsArray.length > 0) {
+          setDrugsData(drugsArray);
+          
+          // Extract unique scientific names for dropdown
+          const uniqueNames = [...new Set(drugsArray.map(drug => {
+            // Handle different property name formats
+            return drug.scientificName || drug.ScientificName || drug.scientific_name || '';
+          }).filter(name => name !== ''))];
+          
+          console.log("Unique drug names:", uniqueNames);
+          
+          setDrugOptions(uniqueNames.map(name => ({ value: name, label: name })));
+          
+          // Extract unique dosage forms for dropdown
+          const uniqueDosageForms = [...new Set(drugsArray.map(drug => {
+            // Handle different property name formats
+            return drug.dosageForm || drug.DosageForm || drug.dosage_form || '';
+          }).filter(form => form !== ''))];
+          
+          console.log("Unique dosage forms:", uniqueDosageForms);
+          
+          setDosageFormOptions(uniqueDosageForms.map(form => ({ value: form, label: form })));
+          
+          toast.success("Drug data loaded successfully");
+        } else {
+          console.log("Drugs array is empty");
+          toast.error("No drugs data found");
+          loadFallbackData();
+        }
+      } else {
+        console.log("No drugs data available in the database");
+        toast.error("No drugs data found");
+        loadFallbackData();
+      }
+    } catch (error) {
+      console.error("Error fetching drugs data:", error);
+      
+      if (error.message.includes("Permission denied")) {
+        toast.error("Permission denied: Please check Firebase rules");
+      } else {
+        toast.error("Error loading drugs data: " + error.message);
+      }
+      
+      // Load fallback data on error
+      loadFallbackData();
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Update available strengths when scientific name changes
+    if (scientificName && drugsData.length > 0) {
+      const strengthsForDrug = drugsData
+        .filter(drug => {
+          const drugName = drug.scientificName || drug.ScientificName || drug.scientific_name || '';
+          return drugName === scientificName;
+        })
+        .map(drug => drug.strength || drug.Strength || drug.drug_strength || '');
+      
+      const uniqueStrengths = [...new Set(strengthsForDrug)].filter(s => s !== '');
+      setAvailableStrengths(uniqueStrengths.map(strength => ({ value: strength, label: strength })));
+    }
+  }, [scientificName, drugsData]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -166,6 +291,10 @@ const DrugComparison = () => {
   const handleScientificNameChange = (e) => {
     setScientificName(e.target.value);
     setStrength(''); // Reset strength when drug changes
+  };
+
+  const getNceName = (scientificName) => {
+    return nceNames[scientificName] || 'Reference Drug';
   };
 
   const handleCompare = () => {
@@ -220,6 +349,12 @@ const DrugComparison = () => {
     toast.success('Form has been reset');
   };
 
+  // Button to manually retry data loading
+  const handleRetryLoad = () => {
+    toast.info("Retrying data load...");
+    fetchDrugsData();
+  };
+
   return (
     <div className="drug-comparison-page">
       <Toaster
@@ -245,6 +380,13 @@ const DrugComparison = () => {
               color: '#0A558C',
               border: '1px solid #BEE3F8'
             },
+          },
+          info: {
+            style: {
+              background: '#E6F6FF',
+              color: '#0A558C',
+              border: '1px solid #BEE3F8'
+            },
           }
         }}
       />
@@ -252,6 +394,30 @@ const DrugComparison = () => {
       <Header />
       
       <div className="container mt-4">
+        {/* Data loading indicator */}
+        {isDataLoading && (
+          <div className="alert alert-info d-flex align-items-center" role="alert">
+            <div className="spinner-border spinner-border-sm me-2" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div>
+              Loading drug data...
+            </div>
+          </div>
+        )}
+        
+        {/* Retry button for data loading issues */}
+        {!isDataLoading && drugsData.length === 0 && (
+          <div className="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+            <div>
+              Failed to load drug data. Using fallback data instead.
+            </div>
+            <button className="btn btn-sm btn-outline-primary" onClick={handleRetryLoad}>
+              Retry Loading
+            </button>
+          </div>
+        )}
+        
         {/* File Upload Form */}
         {!isLoading && !showResults && (
           <div className="upload-container shadow-sm" id="uploadForm">
@@ -332,7 +498,7 @@ const DrugComparison = () => {
                               disabled={!scientificName}
                             >
                               <option value="" disabled>Select Strength</option>
-                              {scientificName && getStrengthOptions(scientificName).map(option => (
+                              {availableStrengths.map(option => (
                                 <option key={option.value} value={option.value}>{option.label}</option>
                               ))}
                             </select>
