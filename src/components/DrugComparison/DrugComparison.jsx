@@ -14,7 +14,6 @@ import Footer from '../Footer/Footer';
 import ComparisonResults from '../ComparisonResults/ComparisonResults';
 import './DrugComparison.css';
 
-
 const DrugComparison = () => {
   const navigate = useNavigate();
   const [pdfFile, setPdfFile] = useState(null);
@@ -36,9 +35,17 @@ const DrugComparison = () => {
   const [doesageFormOptions, setDoesageFormOptions] = useState([]);
   const [availableStrengths, setAvailableStrengths] = useState([]);
 
+  // Search state for each dropdown
+  const [scientificNameSearch, setScientificNameSearch] = useState('');
+  const [strengthSearch, setStrengthSearch] = useState('');
+  const [doesageFormSearch, setDoesageFormSearch] = useState('');
+  
+  // Dropdown visibility state
+  const [showScientificNameDropdown, setShowScientificNameDropdown] = useState(false);
+  const [showStrengthDropdown, setShowStrengthDropdown] = useState(false);
+  const [showDoesageFormDropdown, setShowDoesageFormDropdown] = useState(false);
 
-
-  // Or use existing Firebase instance if it's already initialized elsewhere
+  // Database
   const database = getDatabase();
   const auth = getAuth();
 
@@ -80,7 +87,21 @@ const DrugComparison = () => {
       setShowResults(true);
     }
 
-    return () => unsubscribe();
+    // Close dropdowns when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.custom-select-container')) {
+        setShowScientificNameDropdown(false);
+        setShowStrengthDropdown(false);
+        setShowDoesageFormDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      unsubscribe();
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [navigate, auth]);
   
   // Debug function to log Firebase data structure
@@ -305,10 +326,38 @@ const DrugComparison = () => {
     }
   };
 
-  const handleScientificNameChange = (e) => {
-    setScientificName(e.target.value);
+  // Select handlers for custom dropdowns
+  const handleSelectScientificName = (value) => {
+    setScientificName(value);
     setStrength(''); // Reset strength when drug changes
+    setShowScientificNameDropdown(false);
+    setScientificNameSearch(''); // Clear search after selection
   };
+
+  const handleSelectStrength = (value) => {
+    setStrength(value);
+    setShowStrengthDropdown(false);
+    setStrengthSearch(''); // Clear search after selection
+  };
+
+  const handleSelectDoesageForm = (value) => {
+    setDoesageForm(value);
+    setShowDoesageFormDropdown(false);
+    setDoesageFormSearch(''); // Clear search after selection
+  };
+
+  // Filter options based on search input
+  const filteredDrugOptions = drugOptions.filter(option => 
+    option.label.toLowerCase().includes(scientificNameSearch.toLowerCase())
+  );
+
+  const filteredStrengthOptions = availableStrengths.filter(option => 
+    option.label.toLowerCase().includes(strengthSearch.toLowerCase())
+  );
+
+  const filteredDoesageFormOptions = doesageFormOptions.filter(option => 
+    option.label.toLowerCase().includes(doesageFormSearch.toLowerCase())
+  );
 
   const getNceName = (scientificName) => {
     return nceNames[scientificName] || 'Reference Drug';
@@ -482,64 +531,140 @@ const DrugComparison = () => {
                 </div>
                 <div className="col-md-6">
                   <div className="drug-selection-container">
+                    {/* Scientific Name Custom Searchable Dropdown */}
                     <div className="mb-3">
                       <label htmlFor="scientificName" className="form-label">Scientific Name</label>
-                      <div className="custom-select-wrapper">
-                        <LuSearch size={18} className="select-icon" />
-                        <select 
-                          className="form-select custom-select" 
-                          id="scientificName" 
-                          required
-                          value={scientificName}
-                          onChange={handleScientificNameChange}
+                      <div className="custom-select-container" tabIndex="0">
+                        <div 
+                          className="custom-select-wrapper"
+                          onClick={() => setShowScientificNameDropdown(!showScientificNameDropdown)}
                         >
-                          <option value="" key="empty-scientific-name" disabled>Search or select Scientific Name</option>
-                          {drugOptions.map(option => (
-                            <option key={option.id || option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                        <IoChevronDown size={18} className="select-arrow" />
+                          <div className="search-input-wrapper">
+                            <LuSearch size={18} className="select-icon" />
+                            <input
+                              type="text"
+                              className="form-control custom-search-input"
+                              placeholder="Search or select Scientific Name"
+                              value={scientificNameSearch || scientificName}
+                              onChange={e => {
+                                setScientificNameSearch(e.target.value);
+                                setShowScientificNameDropdown(true);
+                              }}
+                              onFocus={() => setShowScientificNameDropdown(true)}
+                            />
+                          </div>
+                          <IoChevronDown size={18} className={`select-arrow ${showScientificNameDropdown ? 'rotated' : ''}`} />
+                        </div>
+                        
+                        {showScientificNameDropdown && (
+                          <div className="custom-select-dropdown">
+                            {filteredDrugOptions.length > 0 ? (
+                              filteredDrugOptions.map(option => (
+                                <div 
+                                  key={option.id || option.value} 
+                                  className={`dropdown-item ${scientificName === option.value ? 'selected' : ''}`}
+                                  onClick={() => handleSelectScientificName(option.value)}
+                                >
+                                  {option.label}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="dropdown-item no-results">No results found</div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
+                    
                     <div className="row">
                       <div className="col-md-6">
+                        {/* Strength Custom Searchable Dropdown */}
                         <div className="mb-3">
                           <label htmlFor="strength" className="form-label">Strength</label>
-                          <div className="custom-select-wrapper">
-                            <select 
-                              className="form-select custom-select" 
-                              id="strength" 
-                              required
-                              value={strength}
-                              onChange={(e) => setStrength(e.target.value)}
-                              disabled={!scientificName}
+                          <div className="custom-select-container" tabIndex="0">
+                            <div 
+                              className={`custom-select-wrapper ${!scientificName ? 'disabled' : ''}`}
+                              onClick={() => scientificName && setShowStrengthDropdown(!showStrengthDropdown)}
                             >
-                              <option value="" key="empty-strength" disabled>Select Strength</option>
-                              {availableStrengths.map(option => (
-                                <option key={option.id || `strength-${option.value}`} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
-                            <IoChevronDown size={18} className="select-arrow" />
+                              <div className="search-input-wrapper">
+                                <input
+                                  type="text"
+                                  className="form-control custom-search-input"
+                                  placeholder="Select Strength"
+                                  value={strengthSearch || strength}
+                                  onChange={e => {
+                                    setStrengthSearch(e.target.value);
+                                    setShowStrengthDropdown(true);
+                                  }}
+                                  disabled={!scientificName}
+                                  onFocus={() => scientificName && setShowStrengthDropdown(true)}
+                                />
+                              </div>
+                              <IoChevronDown size={18} className={`select-arrow ${showStrengthDropdown ? 'rotated' : ''}`} />
+                            </div>
+                            
+                            {showStrengthDropdown && (
+                              <div className="custom-select-dropdown">
+                                {filteredStrengthOptions.length > 0 ? (
+                                  filteredStrengthOptions.map(option => (
+                                    <div 
+                                      key={option.id || `strength-${option.value}`} 
+                                      className={`dropdown-item ${strength === option.value ? 'selected' : ''}`}
+                                      onClick={() => handleSelectStrength(option.value)}
+                                    >
+                                      {option.label}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="dropdown-item no-results">No results found</div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="col-md-6">
+                        {/* Dosage Form Custom Searchable Dropdown */}
                         <div className="mb-3">
                           <label htmlFor="doesageForm" className="form-label">Dosage Form</label>
-                          <div className="custom-select-wrapper">
-                            <select 
-                              className="form-select custom-select" 
-                              id="doesageForm" 
-                              required
-                              value={doesageForm}
-                              onChange={(e) => setDoesageForm(e.target.value)}
+                          <div className="custom-select-container" tabIndex="0">
+                            <div 
+                              className="custom-select-wrapper"
+                              onClick={() => setShowDoesageFormDropdown(!showDoesageFormDropdown)}
                             >
-                              <option value="" key="empty-dosage-form" disabled>Select Dosage Form</option>
-                              {doesageFormOptions.map(option => (
-                                <option key={option.id || `form-${option.value}`} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
-                            <IoChevronDown size={18} className="select-arrow" />
+                              <div className="search-input-wrapper">
+                                <input
+                                  type="text"
+                                  className="form-control custom-search-input"
+                                  placeholder="Select Dosage Form"
+                                  value={doesageFormSearch || doesageForm}
+                                  onChange={e => {
+                                    setDoesageFormSearch(e.target.value);
+                                    setShowDoesageFormDropdown(true);
+                                  }}
+                                  onFocus={() => setShowDoesageFormDropdown(true)}
+                                />
+                              </div>
+                              <IoChevronDown size={18} className={`select-arrow ${showDoesageFormDropdown ? 'rotated' : ''}`} />
+                            </div>
+                            
+                            {showDoesageFormDropdown && (
+                              <div className="custom-select-dropdown">
+                                {filteredDoesageFormOptions.length > 0 ? (
+                                  filteredDoesageFormOptions.map(option => (
+                                    <div 
+                                      key={option.id || `form-${option.value}`} 
+                                      className={`dropdown-item ${doesageForm === option.value ? 'selected' : ''}`}
+                                      onClick={() => handleSelectDoesageForm(option.value)}
+                                    >
+                                      {option.label}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="dropdown-item no-results">No results found</div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
