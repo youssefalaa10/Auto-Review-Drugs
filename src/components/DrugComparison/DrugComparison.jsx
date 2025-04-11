@@ -22,7 +22,7 @@ const DrugComparison = () => {
   const [pdfFile, setPdfFile] = useState(null);
   const [scientificName, setScientificName] = useState('');
   const [strength, setStrength] = useState('');
-  const [dosageForm, setDosageForm] = useState('');
+  const [doesageForm, setDoesageForm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [comparisonScore, setComparisonScore] = useState(87.5);
@@ -35,7 +35,7 @@ const DrugComparison = () => {
   // Firebase data states
   const [drugsData, setDrugsData] = useState([]);
   const [drugOptions, setDrugOptions] = useState([]);
-  const [dosageFormOptions, setDosageFormOptions] = useState([]);
+  const [doesageFormOptions, setDoesageFormOptions] = useState([]);
   const [availableStrengths, setAvailableStrengths] = useState([]);
 
   // Initialize Firebase - replace with your config
@@ -110,27 +110,35 @@ const DrugComparison = () => {
   const loadFallbackData = () => {
     console.log("Loading fallback data");
     const fallbackDrugs = [
-      { scientificName: 'Paracetamol', dosageForm: 'Tablet', strength: '500 mg' },
-      { scientificName: 'Paracetamol', dosageForm: 'Tablet', strength: '250 mg' },
-      { scientificName: 'Paracetamol', dosageForm: 'Syrup', strength: '125 mg/5ml' },
-      { scientificName: 'Ibuprofen', dosageForm: 'Capsule', strength: '200 mg' },
-      { scientificName: 'Ibuprofen', dosageForm: 'Tablet', strength: '400 mg' },
-      { scientificName: 'Amoxicillin', dosageForm: 'Capsule', strength: '500 mg' },
-      { scientificName: 'Amoxicillin', dosageForm: 'Suspension', strength: '250 mg/5ml' },
-      { scientificName: 'Omeprazole', dosageForm: 'Capsule', strength: '20 mg' },
-      { scientificName: 'Atorvastatin', dosageForm: 'Tablet', strength: '10 mg' },
-      { scientificName: 'Atorvastatin', dosageForm: 'Tablet', strength: '20 mg' }
+      { scientificName: 'Paracetamol', doesageForm: 'Tablet', strength: '500 mg' },
+      { scientificName: 'Paracetamol', doesageForm: 'Tablet', strength: '250 mg' },
+      { scientificName: 'Paracetamol', doesageForm: 'Syrup', strength: '125 mg/5ml' },
+      { scientificName: 'Ibuprofen', doesageForm: 'Capsule', strength: '200 mg' },
+      { scientificName: 'Ibuprofen', doesageForm: 'Tablet', strength: '400 mg' },
+      { scientificName: 'Amoxicillin', doesageForm: 'Capsule', strength: '500 mg' },
+      { scientificName: 'Amoxicillin', doesageForm: 'Suspension', strength: '250 mg/5ml' },
+      { scientificName: 'Omeprazole', doesageForm: 'Capsule', strength: '20 mg' },
+      { scientificName: 'Atorvastatin', doesageForm: 'Tablet', strength: '10 mg' },
+      { scientificName: 'Atorvastatin', doesageForm: 'Tablet', strength: '20 mg' }
     ];
 
     setDrugsData(fallbackDrugs);
     
-    // Extract unique scientific names for dropdown
+    // Extract unique scientific names for dropdown and ensure each has a unique value
     const uniqueNames = [...new Set(fallbackDrugs.map(drug => drug.scientificName))];
-    setDrugOptions(uniqueNames.map(name => ({ value: name, label: name })));
+    setDrugOptions(uniqueNames.map((name, index) => ({ 
+      value: name, 
+      label: name,
+      id: `drug-${index}` // Add an id for uniqueness
+    })));
     
     // Extract unique dosage forms for dropdown
-    const uniqueDosageForms = [...new Set(fallbackDrugs.map(drug => drug.dosageForm))];
-    setDosageFormOptions(uniqueDosageForms.map(form => ({ value: form, label: form })));
+    const uniqueDoesageForms = [...new Set(fallbackDrugs.map(drug => drug.doesageForm))];
+    setDoesageFormOptions(uniqueDoesageForms.map((form, index) => ({ 
+      value: form, 
+      label: form,
+      id: `form-${index}` // Add an id for uniqueness
+    })));
     
     setIsDataLoading(false);
   };
@@ -198,17 +206,27 @@ const DrugComparison = () => {
           
           console.log("Unique drug names:", uniqueNames);
           
-          setDrugOptions(uniqueNames.map(name => ({ value: name, label: name })));
+          // Add unique ids to each option
+          setDrugOptions(uniqueNames.map((name, index) => ({ 
+            value: name, 
+            label: name,
+            id: `drug-${index}` // Add an id for uniqueness
+          })));
           
           // Extract unique dosage forms for dropdown
-          const uniqueDosageForms = [...new Set(drugsArray.map(drug => {
+          const uniqueDoesageForms = [...new Set(drugsArray.map(drug => {
             // Handle different property name formats
-            return drug.dosageForm || drug.DosageForm || drug.dosage_form || '';
+            return drug.doesageForm || drug.DoesageForm || drug.dosage_form || '';
           }).filter(form => form !== ''))];
           
-          console.log("Unique dosage forms:", uniqueDosageForms);
+          console.log("Unique dosage forms:", uniqueDoesageForms);
           
-          setDosageFormOptions(uniqueDosageForms.map(form => ({ value: form, label: form })));
+          // Add unique ids to each option
+          setDoesageFormOptions(uniqueDoesageForms.map((form, index) => ({ 
+            value: form, 
+            label: form,
+            id: `form-${index}` // Add an id for uniqueness
+          })));
           
           toast.success("Drug data loaded successfully");
         } else {
@@ -248,7 +266,12 @@ const DrugComparison = () => {
         .map(drug => drug.strength || drug.Strength || drug.drug_strength || '');
       
       const uniqueStrengths = [...new Set(strengthsForDrug)].filter(s => s !== '');
-      setAvailableStrengths(uniqueStrengths.map(strength => ({ value: strength, label: strength })));
+      // Add unique ids to each option
+      setAvailableStrengths(uniqueStrengths.map((strength, index) => ({ 
+        value: strength, 
+        label: strength,
+        id: `strength-${index}` // Add an id for uniqueness
+      })));
     }
   }, [scientificName, drugsData]);
 
@@ -299,7 +322,7 @@ const DrugComparison = () => {
 
   const handleCompare = () => {
     // Form validation
-    if (!pdfFile || !scientificName || !strength || !dosageForm) {
+    if (!pdfFile || !scientificName || !strength || !doesageForm) {
       toast.error('Please fill in all required fields and upload a PDF file');
       return;
     }
@@ -307,7 +330,7 @@ const DrugComparison = () => {
     setIsLoading(true);
     
     // Set generic and NCE drug names
-    const genericName = `${scientificName} ${strength} ${dosageForm}`;
+    const genericName = `${scientificName} ${strength} ${doesageForm}`;
     const nceName = getNceName(scientificName);
     
     setGenericDrugName(genericName);
@@ -344,7 +367,7 @@ const DrugComparison = () => {
     setPdfFile(null);
     setScientificName('');
     setStrength('');
-    setDosageForm('');
+    setDoesageForm('');
     setShowResults(false);
     toast.success('Form has been reset');
   };
@@ -476,9 +499,9 @@ const DrugComparison = () => {
                           value={scientificName}
                           onChange={handleScientificNameChange}
                         >
-                          <option value="" disabled>Search or select Scientific Name</option>
+                          <option value="" key="empty-scientific-name" disabled>Search or select Scientific Name</option>
                           {drugOptions.map(option => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
+                            <option key={option.id || option.value} value={option.value}>{option.label}</option>
                           ))}
                         </select>
                         <IoChevronDown size={18} className="select-arrow" />
@@ -497,9 +520,9 @@ const DrugComparison = () => {
                               onChange={(e) => setStrength(e.target.value)}
                               disabled={!scientificName}
                             >
-                              <option value="" disabled>Select Strength</option>
+                              <option value="" key="empty-strength" disabled>Select Strength</option>
                               {availableStrengths.map(option => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
+                                <option key={option.id || `strength-${option.value}`} value={option.value}>{option.label}</option>
                               ))}
                             </select>
                             <IoChevronDown size={18} className="select-arrow" />
@@ -508,18 +531,18 @@ const DrugComparison = () => {
                       </div>
                       <div className="col-md-6">
                         <div className="mb-3">
-                          <label htmlFor="dosageForm" className="form-label">Dosage Form</label>
+                          <label htmlFor="doesageForm" className="form-label">Dosage Form</label>
                           <div className="custom-select-wrapper">
                             <select 
                               className="form-select custom-select" 
-                              id="dosageForm" 
+                              id="doesageForm" 
                               required
-                              value={dosageForm}
-                              onChange={(e) => setDosageForm(e.target.value)}
+                              value={doesageForm}
+                              onChange={(e) => setDoesageForm(e.target.value)}
                             >
-                              <option value="" disabled>Select Dosage Form</option>
-                              {dosageFormOptions.map(option => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
+                              <option value="" key="empty-dosage-form" disabled>Select Dosage Form</option>
+                              {doesageFormOptions.map(option => (
+                                <option key={option.id || `form-${option.value}`} value={option.value}>{option.label}</option>
                               ))}
                             </select>
                             <IoChevronDown size={18} className="select-arrow" />
@@ -555,7 +578,7 @@ const DrugComparison = () => {
         {showResults && (
           <ComparisonResults 
             score={comparisonScore}
-            genericName={genericDrugName || `${scientificName} ${strength} ${dosageForm}`}
+            genericName={genericDrugName || `${scientificName} ${strength} ${doesageForm}`}
             nceName={nceDrugName || getNceName(scientificName)}
             onDownload={handleDownloadReport}
             onRestart={() => {
