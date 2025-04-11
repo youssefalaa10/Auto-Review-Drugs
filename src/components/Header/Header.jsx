@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth'; // 🔥 Import Firebase signOut
-import './Header.css';
+import './Header.css'
 import sfdaLogo from '../../assets/SfdaLogo.png';
 import { auth } from '../../firebase';
 

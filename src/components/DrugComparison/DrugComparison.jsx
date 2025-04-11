@@ -14,8 +14,6 @@ import Footer from '../Footer/Footer';
 import ComparisonResults from '../ComparisonResults/ComparisonResults';
 import './DrugComparison.css';
 
-// Your Firebase config should be imported or defined here
-// import { firebaseConfig } from '../firebase/config';
 
 const DrugComparison = () => {
   const navigate = useNavigate();
@@ -38,11 +36,7 @@ const DrugComparison = () => {
   const [doesageFormOptions, setDoesageFormOptions] = useState([]);
   const [availableStrengths, setAvailableStrengths] = useState([]);
 
-  // Initialize Firebase - replace with your config
-  // Uncomment and update this section with your actual config
-  // const app = initializeApp(firebaseConfig);
-  // const database = getDatabase(app);
-  // const auth = getAuth(app);
+
 
   // Or use existing Firebase instance if it's already initialized elsewhere
   const database = getDatabase();
@@ -137,7 +131,7 @@ const DrugComparison = () => {
     setDoesageFormOptions(uniqueDoesageForms.map((form, index) => ({ 
       value: form, 
       label: form,
-      id: `form-${index}` // Add an id for uniqueness
+      id: `form-${index}` 
     })));
     
     setIsDataLoading(false);

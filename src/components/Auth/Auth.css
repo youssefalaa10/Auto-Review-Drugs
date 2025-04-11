@@ -1,14 +1,14 @@
 :root {
-  --primary-color: #00A3A3; /* SFDA Teal */
-  --primary-green: #00ab8e; /* Teal-Green */
-  --primary-dark: #008a73; /* Darker Teal */
+  --primary-color: #2a5988;
+  --primary-blue: #3388cc;
+  --primary-dark: #20466e;
   --text-color: #333;
   --error-color: #e74c3c;
   --success-color: #2ecc71;
   --light-bg: #f5f7fa;
   --border-color: #e0e0e0;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --hover-color: #008a73;
+  --shadow-color: rgba(42, 89, 136, 0.2);
+  --hover-color: #20466e;
 }
 
 * {
@@ -32,9 +32,9 @@
 .login-container {
   background-color: white;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px var(--shadow-color);
   padding: 40px;
-  max-width: 550px; /* Increased width from 450px */
+  max-width: 550px;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -49,8 +49,8 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  fill: var(--primary-green); /* <-- This colors the SVG paths */
-  filter: drop-shadow(0 4px 8px rgba(12, 212, 212, 0.3));
+  fill: var(--primary-color);
+  filter: drop-shadow(0 4px 8px var(--shadow-color));
 }
 
 .logo-container {
@@ -65,10 +65,10 @@
 .login-header h2 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--primary-green);
+  color: var(--primary-color);
   margin-bottom: 10px;
   letter-spacing: -0.5px;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-green));
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-blue));
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -99,7 +99,7 @@
 }
 
 .tab-button.active {
-  background-color: var(--primary-green);
+  background-color: var(--primary-color);
   color: white;
 }
 
@@ -130,8 +130,8 @@
 }
 
 .input-group:focus-within {
-  box-shadow: 0 2px 10px rgba(0, 171, 142, 0.15);
-  border-color: var(--primary-green);
+  box-shadow: 0 2px 10px var(--shadow-color);
+  border-color: var(--primary-color);
 }
 
 .input-error {
@@ -151,7 +151,7 @@
   align-items: center;
   justify-content: center;
   width: 50px;
-  background: linear-gradient(135deg, #00ab8e 0%, #008a73 100%);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-blue));
   color: white;
   font-size: 1rem;
 }
@@ -185,8 +185,8 @@
 }
 
 .password-input-group:focus-within {
-  box-shadow: 0 2px 10px rgba(0, 171, 142, 0.15);
-  border-color: var(--primary-green);
+  box-shadow: 0 2px 10px var(--shadow-color);
+  border-color: var(--primary-color);
 }
 
 .password-input-group .form-control {
@@ -206,7 +206,7 @@
 
 .password-toggle:hover {
   background-color: #f0f0f0;
-  color: var(--primary-green);
+  color: var(--primary-color);
 }
 
 .forgot-password {
@@ -215,7 +215,7 @@
 }
 
 .forgot-password a {
-  color: var(--primary-green);
+  color: var(--primary-color);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
@@ -249,21 +249,21 @@
 }
 
 .login-btn {
-  background: linear-gradient(135deg, #00ab8e 0%, #008a73 100%);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-blue));
   color: white;
   margin-top: 15px;
-  box-shadow: 0 4px 10px rgba(0, 171, 142, 0.2);
+  box-shadow: 0 4px 10px var(--shadow-color);
 }
 
 .login-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #00b99a 0%, #009a83 100%);
-  box-shadow: 0 6px 15px rgba(0, 171, 142, 0.3);
+  background: linear-gradient(135deg, #3a6aa5, #3d98e0);
+  box-shadow: 0 6px 15px var(--shadow-color);
   transform: translateY(-2px);
 }
 
 .login-btn:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 5px rgba(0, 171, 142, 0.2);
+  box-shadow: 0 2px 5px var(--shadow-color);
 }
 
 .guest-btn {
@@ -357,20 +357,19 @@
   .login-container {
     padding: 30px 20px;
   }
-  
+
   .login-header h2 {
     font-size: 1.8rem;
   }
-  
+
   .form-control,
   .login-btn,
   .guest-btn {
     padding: 14px 12px;
   }
-  
+
   .tab-button {
     padding: 12px 0;
     font-size: 0.9rem;
   }
 }
-

@@ -1,23 +1,32 @@
+:root {
+  --primary-color: #2a5988; /* Deep Blue */
+  --primary-blue: #3388cc;  /* Light Blue */
+  --link-color: var(--primary-blue);
+  --link-hover: #1f6fa8; /* Slightly darker blue for hover */
+}
+
 .footer {
-    margin-top: auto;
-    text-align: center;
-    font-size: 0.9rem;
-    color: #777;
-    padding: 20px 0;
-  }
-  
-  .footer a {
-    color: #00A3A3;
-    text-decoration: none;
-  }
-  
-  .footer a:hover {
-    text-decoration: underline;
-  }
-  
-  .container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-  }
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #777;
+  padding: 20px 0;
+}
+
+.footer a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
